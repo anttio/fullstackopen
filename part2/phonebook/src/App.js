@@ -1,5 +1,43 @@
 import React, { useEffect, useState } from 'react';
 
+const Filter = ({ value, handleChange }) => {
+  return (
+    <div>
+      Filter shown with <input value={value} onChange={handleChange} />
+    </div>
+  );
+};
+
+const PersonForm = ({ fields, handleSubmit }) => {
+  return (
+    <form onSubmit={handleSubmit}>
+      {fields.map((field) => {
+        return (
+          <div key={field.label}>
+            <label>
+              {field.label}
+              <input value={field.value} onChange={field.handler} />
+            </label>
+          </div>
+        );
+      })}
+      <button type="submit">Add</button>
+    </form>
+  );
+};
+
+const Persons = ({ persons }) => {
+  return (
+    <div>
+      {persons.map((person) => (
+        <p key={person.name}>
+          {person.name} {person.number}
+        </p>
+      ))}
+    </div>
+  );
+};
+
 const App = () => {
   const [persons, setPersons] = useState([
     { name: 'Arto Hellas', number: '040-123456' },
@@ -9,10 +47,10 @@ const App = () => {
   ]);
   const [newName, setNewName] = useState('');
   const [newNumber, setNewNumber] = useState('');
-  const [filter, setFilter] = useState('');
   const [filteredPersons, setFilteredPersons] = useState(persons);
+  const [newFilter, setNewFilter] = useState('');
 
-  const addPerson = (event) => {
+  const addNewPerson = (event) => {
     event.preventDefault();
 
     if (persons.some((person) => person.name === newName)) {
@@ -29,6 +67,18 @@ const App = () => {
     setNewNumber('');
   };
 
+  const handleFilterChange = (event) => {
+    setNewFilter(event.target.value);
+  };
+
+  useEffect(() => {
+    setFilteredPersons(
+      persons.filter((person) =>
+        person.name.toLowerCase().includes(newFilter.toLocaleLowerCase())
+      )
+    );
+  }, [newFilter, persons]);
+
   const handleNameChange = (event) => {
     setNewName(event.target.value);
   };
@@ -37,44 +87,22 @@ const App = () => {
     setNewNumber(event.target.value);
   };
 
-  const handleFilterChange = (event) => {
-    setFilter(event.target.value);
-  };
-
-  useEffect(() => {
-    setFilteredPersons(
-      persons.filter((person) =>
-        person.name.toLowerCase().includes(filter.toLocaleLowerCase())
-      )
-    );
-  }, [filter, persons]);
-
   return (
     <div>
       <h1>Phonebook</h1>
-      <div>
-        Filter shown with <input value={filter} onChange={handleFilterChange} />
-      </div>
+      <Filter value={newFilter} handleChange={handleFilterChange} />
 
-      <h2>Add new</h2>
-      <form onSubmit={addPerson}>
-        <div>
-          Name: <input value={newName} onChange={handleNameChange} />
-        </div>
-        <div>
-          Number: <input value={newNumber} onChange={handleNumberChange} />
-        </div>
-        <div>
-          <button type="submit">Add</button>
-        </div>
-      </form>
+      <h2>Add a new</h2>
+      <PersonForm
+        fields={[
+          { label: 'Name', value: newName, handler: handleNameChange },
+          { label: 'Number', value: newNumber, handler: handleNumberChange },
+        ]}
+        handleSubmit={addNewPerson}
+      />
 
       <h2>Numbers</h2>
-      {filteredPersons.map((person) => (
-        <p key={person.name}>
-          {person.name} {person.number}
-        </p>
-      ))}
+      <Persons persons={filteredPersons} />
     </div>
   );
 };
