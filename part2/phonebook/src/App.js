@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 
 const Filter = ({ value, handleChange }) => {
   return (
@@ -39,16 +40,25 @@ const Persons = ({ persons }) => {
 };
 
 const App = () => {
-  const [persons, setPersons] = useState([
-    { name: 'Arto Hellas', number: '040-123456' },
-    { name: 'Ada Lovelace', number: '39-44-5323523' },
-    { name: 'Dan Abramov', number: '12-43-234345' },
-    { name: 'Mary Poppendieck', number: '39-23-6423122' },
-  ]);
   const [newName, setNewName] = useState('');
   const [newNumber, setNewNumber] = useState('');
-  const [filteredPersons, setFilteredPersons] = useState(persons);
   const [newFilter, setNewFilter] = useState('');
+
+  const [persons, setPersons] = useState([]);
+  useEffect(() => {
+    axios
+      .get('http://localhost:3001/persons')
+      .then((response) => setPersons(response.data));
+  }, []);
+
+  const [filteredPersons, setFilteredPersons] = useState(persons);
+  useEffect(() => {
+    setFilteredPersons(
+      persons.filter((person) =>
+        person.name.toLowerCase().includes(newFilter.toLowerCase())
+      )
+    );
+  }, [newFilter, persons]);
 
   const addNewPerson = (event) => {
     event.preventDefault();
@@ -70,14 +80,6 @@ const App = () => {
   const handleFilterChange = (event) => {
     setNewFilter(event.target.value);
   };
-
-  useEffect(() => {
-    setFilteredPersons(
-      persons.filter((person) =>
-        person.name.toLowerCase().includes(newFilter.toLocaleLowerCase())
-      )
-    );
-  }, [newFilter, persons]);
 
   const handleNameChange = (event) => {
     setNewName(event.target.value);
