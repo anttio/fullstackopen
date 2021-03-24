@@ -28,11 +28,18 @@ const PersonForm = ({ fields, handleSubmit }) => {
 };
 
 const Persons = ({ persons }) => {
+  const handleRemovePerson = (person) => {
+    if (window.confirm(`Delete ${person.name}?`)) {
+      personService.remove(person.id);
+    }
+  };
+
   return (
     <div>
       {persons.map((person) => (
         <p key={person.name}>
-          {person.name} {person.number}
+          {person.name} {person.number}{' '}
+          <button onClick={() => handleRemovePerson(person)}>Delete</button>
         </p>
       ))}
     </div>
