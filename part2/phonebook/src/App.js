@@ -1,6 +1,27 @@
 import React, { useEffect, useState } from 'react';
 import personService from './services/persons';
 
+const Alert = ({ message }) => {
+  if (!message) {
+    return false;
+  }
+
+  const alertStyle = {
+    backgroundColor: '#D6F6E2',
+    color: '#1D8547',
+    padding: '8px 16px',
+    marginBottom: 16,
+    borderRadius: 10,
+    fontWeight: 'bolder',
+  };
+
+  return (
+    <div style={alertStyle}>
+      <p>{message}</p>
+    </div>
+  );
+};
+
 const Filter = ({ value, handleChange }) => {
   return (
     <div>
@@ -50,6 +71,7 @@ const App = () => {
   const [newName, setNewName] = useState('');
   const [newNumber, setNewNumber] = useState('');
   const [newFilter, setNewFilter] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
 
   const [persons, setPersons] = useState([]);
   useEffect(() => {
@@ -97,6 +119,10 @@ const App = () => {
       setPersons(persons.concat(returnedPerson));
       setNewName('');
       setNewNumber('');
+      setAlertMessage(`Added ${returnedPerson.name}`);
+      setTimeout(() => {
+        setAlertMessage(null);
+      }, 5000);
     });
   };
 
@@ -115,6 +141,9 @@ const App = () => {
   return (
     <div>
       <h1>Phonebook</h1>
+
+      <Alert message={alertMessage} />
+
       <Filter value={newFilter} handleChange={handleFilterChange} />
 
       <h2>Add a new</h2>
