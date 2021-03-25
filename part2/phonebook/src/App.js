@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import personService from './services/persons';
 
-const Alert = ({ message }) => {
+const Alert = ({ message, type }) => {
   if (!message) {
     return false;
   }
 
-  const alertStyle = {
+  const alertSuccess = {
     backgroundColor: '#D6F6E2',
     color: '#1D8547',
     padding: '8px 16px',
@@ -15,8 +15,17 @@ const Alert = ({ message }) => {
     fontWeight: 'bolder',
   };
 
+  const alertError = {
+    backgroundColor: '#FFDFDF',
+    color: '#F53636',
+    padding: '8px 16px',
+    marginBottom: 16,
+    borderRadius: 10,
+    fontWeight: 'bolder',
+  };
+
   return (
-    <div style={alertStyle}>
+    <div style={type === 'error' ? alertError : alertSuccess}>
       <p>{message}</p>
     </div>
   );
@@ -38,7 +47,7 @@ const PersonForm = ({ fields, handleSubmit }) => {
           <div key={field.label}>
             <label>
               {field.label}
-              <input value={field.value} onChange={field.handler} />
+              <input onChange={field.handler} value={field.value} />
             </label>
           </div>
         );
@@ -48,19 +57,13 @@ const PersonForm = ({ fields, handleSubmit }) => {
   );
 };
 
-const Persons = ({ persons }) => {
-  const handleRemovePerson = (person) => {
-    if (window.confirm(`Delete ${person.name}?`)) {
-      personService.remove(person.id);
-    }
-  };
-
+const Persons = ({ persons, removePerson }) => {
   return (
     <div>
       {persons.map((person) => (
         <p key={person.name}>
           {person.name} {person.number}{' '}
-          <button onClick={() => handleRemovePerson(person)}>Delete</button>
+          <button onClick={() => removePerson(person)}>Delete</button>
         </p>
       ))}
     </div>
@@ -68,66 +71,83 @@ const Persons = ({ persons }) => {
 };
 
 const App = () => {
-  const [newName, setNewName] = useState('');
-  const [newNumber, setNewNumber] = useState('');
-  const [newFilter, setNewFilter] = useState('');
-  const [alertMessage, setAlertMessage] = useState('');
-
   const [persons, setPersons] = useState([]);
   useEffect(() => {
     personService.getAll().then((persons) => setPersons(persons));
   }, []);
 
-  const [filteredPersons, setFilteredPersons] = useState(persons);
-  useEffect(() => {
-    setFilteredPersons(
-      persons.filter((person) =>
-        person.name.toLowerCase().includes(newFilter.toLowerCase())
-      )
-    );
-  }, [persons, newFilter]);
+  const [filterTerm, setFilterTerm] = useState('');
+  const filteredPersons = persons.filter((person) =>
+    person.name.toLowerCase().includes(filterTerm.toLowerCase())
+  );
+
+  const [newName, setNewName] = useState('');
+  const [newNumber, setNewNumber] = useState('');
+
+  const [alert, setAlert] = useState({});
 
   const addNewPerson = (event) => {
     event.preventDefault();
 
-    const person = {
-      name: newName,
-      number: newNumber,
-    };
     const existingPerson = persons.find((person) => person.name === newName);
-
     if (existingPerson) {
       if (
         window.confirm(
           `${newName} is already added to phonebook, replace the old number with a new one?`
         )
       ) {
-        personService
-          .update(existingPerson.id, { ...existingPerson, number: newNumber })
-          .then((returnedPerson) => {
-            setPersons(
-              persons.map((person) =>
-                person.id !== existingPerson.id ? person : returnedPerson
-              )
-            );
-          });
+        updatePerson(existingPerson);
       }
       return;
     }
 
-    personService.create(person).then((returnedPerson) => {
-      setPersons(persons.concat(returnedPerson));
-      setNewName('');
-      setNewNumber('');
-      setAlertMessage(`Added ${returnedPerson.name}`);
-      setTimeout(() => {
-        setAlertMessage(null);
-      }, 5000);
+    personService
+      .create({ name: newName, number: newNumber })
+      .then((returnedPerson) => {
+        setPersons(persons.concat(returnedPerson));
+        setNewName('');
+        setNewNumber('');
+        handleAlertMessage({
+          type: 'success',
+          message: `Added ${returnedPerson.name}`,
+        });
+      });
+  };
+
+  const updatePerson = (updatePerson) => {
+    personService
+      .update(updatePerson.id, { ...updatePerson, number: newNumber })
+      .then((returnedPerson) => {
+        setPersons(
+          persons.map((person) =>
+            person.id !== updatePerson.id ? person : returnedPerson
+          )
+        );
+      });
+  };
+
+  const removePerson = (removePerson) => {
+    if (window.confirm(`Delete ${removePerson.name}?`)) {
+      personService
+        .remove(removePerson.id)
+        .then(
+          setPersons(persons.filter((person) => person.id !== removePerson.id))
+        );
+    }
+  };
+
+  const handleAlertMessage = (message) => {
+    setAlert({
+      type: message.type,
+      message: message.message,
     });
+    setTimeout(() => {
+      setAlert({});
+    }, 5000);
   };
 
   const handleFilterChange = (event) => {
-    setNewFilter(event.target.value);
+    setFilterTerm(event.target.value);
   };
 
   const handleNameChange = (event) => {
@@ -141,10 +161,9 @@ const App = () => {
   return (
     <div>
       <h1>Phonebook</h1>
+      <Alert message={alert.message} type={alert.type} />
 
-      <Alert message={alertMessage} />
-
-      <Filter value={newFilter} handleChange={handleFilterChange} />
+      <Filter handleChange={handleFilterChange} value={filterTerm} />
 
       <h2>Add a new</h2>
       <PersonForm
@@ -156,7 +175,7 @@ const App = () => {
       />
 
       <h2>Numbers</h2>
-      <Persons persons={filteredPersons} />
+      <Persons persons={filteredPersons} removePerson={removePerson} />
     </div>
   );
 };
