@@ -123,6 +123,13 @@ const App = () => {
             person.id !== updatePerson.id ? person : returnedPerson
           )
         );
+      })
+      .catch(() => {
+        handleAlertMessage({
+          type: 'error',
+          message: `Information of ${updatePerson.name} has already been removed from server`,
+        });
+        setPersons(persons.filter((person) => person.id !== updatePerson.id));
       });
   };
 
