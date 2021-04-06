@@ -111,6 +111,12 @@ const App = () => {
           type: 'success',
           message: `Added ${returnedPerson.name}`,
         });
+      })
+      .catch((error) => {
+        handleAlertMessage({
+          type: 'error',
+          message: error.response.data.error,
+        });
       });
   };
 
@@ -124,10 +130,10 @@ const App = () => {
           )
         );
       })
-      .catch(() => {
+      .catch((error) => {
         handleAlertMessage({
           type: 'error',
-          message: `Information of ${updatePerson.name} has already been removed from server`,
+          message: error.response.data.error,
         });
         setPersons(persons.filter((person) => person.id !== updatePerson.id));
       });
